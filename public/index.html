@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>multi-snake</title>
+    <style nonce="NONCE">
+      :root {
+        --cell: 18px;
+        --bg: #0e1116;
+        --board: #161b22;
+        --grid: #1d232c;
+        --ink: #c9d1d9;
+        --dim: #6e7681;
+        --food: #f2c14e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 2rem 1rem;
+        background: var(--bg); color: var(--ink);
+        font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        display: flex; justify-content: center;
+      }
+      h1 { font-size: 1.1rem; letter-spacing: .3em; text-transform: uppercase; margin: 0 0 1rem; }
+      .game { display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+
+      .board {
+        display: flex; flex-direction: column;
+        background: var(--board);
+        padding: 4px; border-radius: 8px;
+        border: 1px solid var(--grid);
+        outline: none;
+      }
+      .board:focus { border-color: #30363d; box-shadow: 0 0 0 2px #21262d; }
+      .row { display: flex; }
+      .cell { width: var(--cell); height: var(--cell); }
+      .cell.f {
+        background: var(--food);
+        border-radius: 50%;
+        transform: scale(.6);
+      }
+      .cell.s { border-radius: 3px; }
+      .cell.h { border-radius: 5px; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .8); }
+
+      .p0 { background: #4ade80; } .p1 { background: #60a5fa; }
+      .p2 { background: #f472b6; } .p3 { background: #fbbf24; }
+      .p4 { background: #a78bfa; } .p5 { background: #22d3ee; }
+      .p6 { background: #fb7185; } .p7 { background: #a3e635; }
+
+      .side { width: 15rem; display: flex; flex-direction: column; gap: 1rem; }
+      .join p, .hint { color: var(--dim); font-size: .85rem; margin: 0 0 .5rem; }
+      input.name, button {
+        font: inherit; width: 100%; padding: .5rem;
+        border-radius: 6px; border: 1px solid var(--grid);
+        background: var(--board); color: var(--ink);
+      }
+      button { cursor: pointer; margin-top: .5rem; }
+      button:hover { border-color: var(--dim); }
+
+      .you { border-left: 4px solid; padding-left: .75rem; background: none; }
+      .you.p0 { border-color: #4ade80; } .you.p1 { border-color: #60a5fa; }
+      .you.p2 { border-color: #f472b6; } .you.p3 { border-color: #fbbf24; }
+      .you.p4 { border-color: #a78bfa; } .you.p5 { border-color: #22d3ee; }
+      .you.p6 { border-color: #fb7185; } .you.p7 { border-color: #a3e635; }
+      .you .mine { margin: 0; display: flex; justify-content: space-between; }
+      .you .pts { color: var(--food); }
+
+      .scores { list-style: none; margin: 0; padding: 0; }
+      .scores li {
+        display: flex; align-items: center; gap: .5rem;
+        padding: .2rem 0; background: none;
+      }
+      .scores li.out { opacity: .35; }
+      .swatch { width: .7rem; height: .7rem; border-radius: 3px; background: inherit; }
+      .scores li.p0 .swatch { background: #4ade80; } .scores li.p1 .swatch { background: #60a5fa; }
+      .scores li.p2 .swatch { background: #f472b6; } .scores li.p3 .swatch { background: #fbbf24; }
+      .scores li.p4 .swatch { background: #a78bfa; } .scores li.p5 .swatch { background: #22d3ee; }
+      .scores li.p6 .swatch { background: #fb7185; } .scores li.p7 .swatch { background: #a3e635; }
+      .who { flex: 1; }
+      .len { color: var(--dim); font-size: .8rem; }
+      .pts { color: var(--food); min-width: 1.5rem; text-align: right; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>multi-snake</h1>
+      <!-- Buzz replaces this comment with the first paint of the component
+           mounted at #app. -->
+      <div id="app"><!--app--></div>
+    </div>
+
+    <script type="importmap" nonce="NONCE">
+      {"imports": {"squint-cljs/core.js": "https://esm.sh/squint-cljs@0.14.208/core.js"}}
+    </script>
+    <script type="module" src="/client.mjs"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{:paths ["src"]
+ ;; Pinned, so the container and this machine run the same Buzz. To work
+ ;; against a checkout instead:
+ ;;
+ ;;   bb -Sdeps '{:deps {io.github.borkdude/buzz {:local/root "../../buzz"}}}' serve
+ :deps {io.github.borkdude/buzz {:git/sha "15cf02fad34cd373cf3050ad66b0bee9906dbc52"}}
+ :tasks {serve {:doc "Play on http://localhost:1350"
+                :requires ([snake.main :as main])
+                :task (main/-main)}
+         dev   {:doc "The same, plus an nrepl on 1668"
+                :requires ([snake.main :as main])
+                :task (main/-main "--nrepl")}}}

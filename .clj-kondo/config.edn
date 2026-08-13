@@ -1,0 +1,4 @@
+;; A defui body is browser code, so it calls things that only exist there.
+{:lint-as {buzz.core/defui clojure.core/defn
+           buzz.core/defpart clojure.core/defn}
+ :linters {:unresolved-namespace {:exclude [js reagami]}}}
