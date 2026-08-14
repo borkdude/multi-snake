@@ -23,8 +23,11 @@
 
 ;; `pid` is a per-connection atom, so each browser is one player. It starts
 ;; empty: a tab that is open but has not joined is a spectator.
+;; Guarded on the player still being there rather than on `pid` being set. A
+;; player dropped for idling leaves the id behind, and refusing on that would
+;; mean the join form comes back and does nothing.
 (defn- join-here! [pid nm]
-  (when-not @pid
+  (when-not (game/me @game/state @pid)
     (reset! pid (game/join! nm))))
 
 (defn- leave-here! [pid]
