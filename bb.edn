@@ -3,10 +3,29 @@
  ;; against a checkout instead:
  ;;
  ;;   bb -Sdeps '{:deps {io.github.borkdude/buzz {:local/root "../../buzz"}}}' serve
- :deps {io.github.borkdude/buzz {:git/sha "15cf02fad34cd373cf3050ad66b0bee9906dbc52"}}
- :tasks {serve {:doc "Play on http://localhost:1350"
-                :requires ([snake.main :as main])
-                :task (main/-main)}
-         dev   {:doc "The same, plus an nrepl on 1668"
-                :requires ([snake.main :as main])
-                :task (main/-main "--nrepl")}}}
+ :deps {io.github.borkdude/buzz {:git/sha "15cf02fad34cd373cf3050ad66b0bee9906dbc52"}
+        ;; The Datastar version renders HTML on the server, which needs
+        ;; something to render it with. The Buzz version needs no such thing:
+        ;; its components are the page.
+        hiccup/hiccup {:mvn/version "2.0.0-RC5"}}
+ :tasks {serve   {:doc "Play on http://localhost:1350"
+                  :requires ([snake.main :as main])
+                  :task (main/-main)}
+         dev     {:doc "The same, plus an nrepl on 1668"
+                  :requires ([snake.main :as main])
+                  :task (main/-main "--nrepl")}
+         ds      {:doc "The Datastar version, on http://localhost:1351"
+                  :requires ([snake.ds :as ds])
+                  :task (ds/-main)}
+         ds-diff {:doc "The same, patching only the rows that changed"
+                  :requires ([snake.ds :as ds])
+                  :task (ds/-main "--diff")}
+         ds-cells {:doc "The same, patching only the cells that changed"
+                   :requires ([snake.ds :as ds])
+                   :task (ds/-main "--cells")}
+         bench   {:doc "Bytes on the wire, both versions, one world"
+                  :requires ([snake.bench :as bench])
+                  :task (apply bench/-main *command-line-args*)}
+         capture {:doc "Save both streams to streams/, for clojure -M:squeeze"
+                  :requires ([snake.capture :as capture])
+                  :task (apply capture/-main *command-line-args*)}}}

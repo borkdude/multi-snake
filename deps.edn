@@ -1,0 +1,10 @@
+;; The JVM side. Brotli needs a native library, which babashka cannot load, so
+;; the squeeze runs here while the game keeps running on babashka.
+{:paths ["src"]
+ :deps {org.clojure/clojure                            {:mvn/version "1.12.0"}
+        com.aayushatharva.brotli4j/brotli4j            {:mvn/version "1.23.0"}
+        com.aayushatharva.brotli4j/native-osx-aarch64  {:mvn/version "1.23.0"}
+        http-kit/http-kit                              {:mvn/version "2.8.0"}}
+ :aliases
+ {:squeeze {:main-opts ["-m" "snake.squeeze"]}
+  :proxy   {:main-opts ["-m" "snake.proxy"]}}}
