@@ -12,6 +12,12 @@
 (def respawn-ticks 16)
 (def palette 8)
 
+;; A snake nobody steers never dies, because the board wraps. It eats its way
+;; to the width of the board and stays there. So a player who has not touched a
+;; key for this long is dropped, and the snake becomes food.
+(def idle-ticks (int (/ 30000 tick-ms)))
+(def warn-ticks (int (/ 10000 tick-ms)))
+
 ;; A player is a snake plus a name and a score. The body is a vector of cells,
 ;; head first. A dead player keeps its row so its score survives the wait.
 (defonce state (atom {:players {} :food #{} :next-id 0 :tick 0}))
@@ -57,6 +63,21 @@
       (if-let [c (free-cell g)]
         (recur (update g :food conj c))
         g)
+      g)))
+
+(defn idle-for [g p] (- (:tick g) (:active p 0)))
+
+;; Dropping the player rather than killing the snake, because a kill would
+;; respawn it and leave the same snake wandering a minute later.
+(defn- drop-idle [g]
+  (let [gone (filter #(> (idle-for g %) idle-ticks) (vals (:players g)))]
+    (if (seq gone)
+      (let [left (remove (set gone) (vals (:players g)))
+            food (-> (into #{} (comp (mapcat :body) (take-nth 2)) gone)
+                     (set/difference (into #{} (mapcat :body) left)))]
+        (-> g
+            (assoc :players (by-id left))
+            (update :food into food)))
       g)))
 
 ;; Respawns go one at a time, because each has to see where the last one landed.
@@ -107,6 +128,7 @@
         (update :tick inc)
         (assoc :players (by-id (concat living dead waiting)))
         (update :food #(into (set/difference % eaten) corpses))
+        drop-idle
         respawn-all
         top-up-food)))
 
@@ -125,7 +147,8 @@
                                (assoc-in [:players id]
                                          {:id id :name (clean-name nm) :score 0
                                           :color (mod id palette) :alive false
-                                          :dead 1 :body [] :dir [1 0]})))))]
+                                          :dead 1 :body [] :dir [1 0]
+                                          :active (:tick g)})))))]
     (dec (:next-id g))))
 
 (defn leave! [id]
@@ -133,16 +156,19 @@
 
 (defn turn!
   "A key from a browser. Compared against the queued direction rather than the
-  moving one, so two keys in one tick cannot fold a snake back on itself."
+  moving one, so two keys in one tick cannot fold a snake back on itself. A key
+  that changes nothing still says someone is there."
   [id k]
   (when-let [[dx dy] (key->dir k)]
-    (swap! state update-in [:players id]
-           (fn [p]
-             (if-let [[cx cy] (and p (:alive p) (or (:queued p) (:dir p)))]
-               (if (and (= dx (- cx)) (= dy (- cy)))
-                 p
-                 (assoc p :queued [dx dy]))
-               p)))))
+    (swap! state
+           (fn [g]
+             (if-let [p (get-in g [:players id])]
+               (let [[cx cy] (or (:queued p) (:dir p))
+                     turn?   (and (:alive p) (not (and (= dx (- cx)) (= dy (- cy)))))]
+                 (assoc-in g [:players id]
+                           (cond-> (assoc p :active (:tick g))
+                             turn? (assoc :queued [dx dy]))))
+               g)))))
 
 ;; What a browser is sent. A cell is a class name, so the page needs no styles
 ;; of its own and the patch is a table of short strings.
@@ -170,5 +196,9 @@
                       :color (:color p) :alive (:alive p) :len (count (:body p))}))))
 
 (defn me [g id]
-  (when-let [p (and id (get-in (:players g) [id]))]
-    {:name (:name p) :score (:score p) :alive (:alive p) :color (:color p)}))
+  (when-let [p (and id (get (:players g) id))]
+    (let [left (- idle-ticks (idle-for g p))]
+      (cond-> {:name (:name p) :score (:score p) :alive (:alive p) :color (:color p)}
+        ;; Being dropped is confusing without a countdown first.
+        (<= left warn-ticks)
+        (assoc :idle-in (max 0 (int (Math/ceil (/ (* left tick-ms) 1000.0)))))))))

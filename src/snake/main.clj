@@ -73,7 +73,9 @@
       (if me
         [:div.you {:class (str "p" (:color me))}
          [:p.mine (:name me) [:span.pts (:score me)]]
-         [:p.hint (if (:alive me) "arrows or wasd" "respawning…")]
+         [:p.hint (cond (:idle-in me) (str "still there? dropping you in " (:idle-in me) "s")
+                        (:alive me)   "arrows or wasd"
+                        :else         "respawning")]
          [:button.leave {:on-click (fn [_] (server! (leave-here! pid)))} "leave"]]
         [:div.join
          [:p "pick a name and join. everyone plays on the same board."]
