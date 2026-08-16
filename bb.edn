@@ -1,6 +1,9 @@
 {:paths ["src"]
- ;; This branch tracks the request-mark branch of a Buzz checkout next door.
- :deps {io.github.borkdude/buzz {:local/root "../buzz"}}
+ ;; Pinned, so the container and this machine run the same Buzz. To work
+ ;; against a checkout instead:
+ ;;
+ ;;   bb -Sdeps '{:deps {io.github.borkdude/buzz {:local/root "../buzz"}}}' serve
+ :deps {io.github.borkdude/buzz {:git/sha "d4de0802090e187f3c15fec306600d4063444f32"}}
  :tasks {serve {:doc "Play on http://localhost:1350"
                 :requires ([snake.main :as main])
                 :task (main/-main)}
