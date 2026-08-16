@@ -2,7 +2,7 @@
   "The page. Everything that decides anything runs on the server; the browser
   draws a table of class names and reports which key was pressed."
   (:require [babashka.nrepl.server :as nrepl]
-            [buzz.core :as buzz :refer [client defpart defui request server server!]]
+            [buzz.core :as buzz :refer [client defpart defui server server!]]
             [org.httpkit.server :as http]
             [snake.game :as game]))
 
@@ -47,7 +47,7 @@
 
 (defui board []
   (let [rows   (server (game/rows @game/state))
-        me     (server (game/me @game/state (my-pid (request))))
+        me     (server (game/me @game/state (my-pid (buzz/request))))
         scores (server (game/scoreboard @game/state))]
     [:div.game
      ;; The board holds the focus, so the keys reach it rather than the page.
@@ -60,7 +60,7 @@
        :on-key-down (fn [e]
                       (let [k (.-key e)]
                         (when (.startsWith k "Arrow") (.preventDefault e))
-                        (server! (when-let [pid (my-pid (request))]
+                        (server! (when-let [pid (my-pid (buzz/request))]
                                    (game/turn! pid (client k))))))}
       (for [row rows]
         [:div.row (for [c row] [:div {:class (str "cell " c)}])])]
@@ -71,7 +71,7 @@
          [:p.hint (cond (:idle-in me) (str "still there? dropping you in " (:idle-in me) "s")
                         (:alive me)   "arrows or wasd"
                         :else         "respawning")]
-         [:button.leave {:on-click (fn [_] (server! (leave-here! (request))))} "leave"]]
+         [:button.leave {:on-click (fn [_] (server! (leave-here! (buzz/request))))} "leave"]]
         [:div.join
          [:p "pick a name and join. everyone plays on the same board."]
          ;; The join button reads this box by class, so nothing else may
@@ -81,11 +81,11 @@
            :autofocus true
            :on-key-down (fn [e]
                           (when (= "Enter" (.-key e))
-                            (server! (join-here! (request) (client (.. e -target -value))))
+                            (server! (join-here! (buzz/request) (client (.. e -target -value))))
                             (.focus (js/document.querySelector ".board"))))}]
          [:button.go
           {:on-click (fn [_]
-                       (server! (join-here! (request)
+                       (server! (join-here! (buzz/request)
                                             (client (.-value (js/document.querySelector ".name")))))
                        (.focus (js/document.querySelector ".board")))}
           "join"]])
