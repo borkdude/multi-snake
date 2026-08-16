@@ -95,7 +95,7 @@
 (def ui
   (buzz/handler {:index "public/index.html"
                  :watch [game/state players]
-                 :mounts [{:el "app" :component (fn [_] (board))}]
+                 :mounts [{:el "app" :ui #'board}]
                  ;; A tab that goes away takes its snake with it, and the
                  ;; connection knows before the game does.
                  :on-close (fn [conn]
