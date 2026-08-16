@@ -97,9 +97,10 @@
                  :mounts [{:el "app" :ui #'board}]
                  ;; A tab that goes away takes its snake with it, and the
                  ;; connection knows before the game does.
-                 :on-close (fn [conn]
-                             (game/leave! (get @players conn))
-                             (swap! players dissoc conn))}))
+                 :on-close (fn [req]
+                             (let [conn (buzz/connection req)]
+                               (game/leave! (get @players conn))
+                               (swap! players dissoc conn)))}))
 
 (defn app [req]
   (or (ui req) {:status 404 :body "not found"}))
