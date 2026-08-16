@@ -2,8 +2,7 @@
   "The page. Everything that decides anything runs on the server; the browser
   draws a table of class names and reports which key was pressed."
   (:require [babashka.nrepl.server :as nrepl]
-            [buzz.core :refer [client defpart defui request server server!]]
-            [buzz.handler :as buzz]
+            [buzz.core :as buzz :refer [client defpart defui request server server!]]
             [org.httpkit.server :as http]
             [snake.game :as game]))
 
