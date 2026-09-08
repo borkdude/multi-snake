@@ -61,7 +61,25 @@
                       (let [k (.-key e)]
                         (when (.startsWith k "Arrow") (.preventDefault e))
                         (server! (when-let [pid (my-pid (buzz/request))]
-                                   (game/turn! pid (client k))))))}
+                                   (game/turn! pid (client k))))))
+       ;; A swipe is a key the finger draws. Pointer events rather than touch
+       ;; events, so a mouse drag steers too. Anything shorter than 24px is a
+       ;; tap and steers nothing.
+       :on-pointer-down (fn [e]
+                          (let [n (.-currentTarget e)]
+                            (.setPointerCapture n (.-pointerId e))
+                            (set! (.-swipeFrom n) [(.-clientX e) (.-clientY e)])))
+       :on-pointer-up (fn [e]
+                        (when-let [[x y] (.-swipeFrom (.-currentTarget e))]
+                          (let [dx (- (.-clientX e) x)
+                                dy (- (.-clientY e) y)
+                                k  (cond
+                                     (< (max (abs dx) (abs dy)) 24) nil
+                                     (> (abs dx) (abs dy)) (if (pos? dx) "ArrowRight" "ArrowLeft")
+                                     :else (if (pos? dy) "ArrowDown" "ArrowUp"))]
+                            (when k
+                              (server! (when-let [pid (my-pid (buzz/request))]
+                                         (game/turn! pid (client k))))))))}
       (for [row rows]
         [:div.row (for [c row] [:div {:class (str "cell " c)}])])]
      [:div.side
@@ -69,7 +87,7 @@
         [:div.you {:class (str "p" (:color me))}
          [:p.mine (:name me) [:span.pts (:score me)]]
          [:p.hint (cond (:idle-in me) (str "still there? dropping you in " (:idle-in me) "s")
-                        (:alive me)   "arrows or wasd"
+                        (:alive me)   "arrows, wasd, or swipe"
                         :else         "respawning")]
          [:button.leave {:on-click (fn [_] (server! (leave-here! (buzz/request))))} "leave"]]
         [:div.join
@@ -89,7 +107,19 @@
                                             (client (.-value (js/document.querySelector ".name")))))
                        (.focus (js/document.querySelector ".board")))}
           "join"]])
-      [:ul.scores (for [p scores] (score-row p))]]]))
+      [:ul.scores (for [p scores] (score-row p))]]
+     ;; iPhones have no fullscreen API, so there the button hides itself.
+     [:button.fs
+      {:on-render (fn [{:keys [node lifecycle]}]
+                    (when (and (= :mount lifecycle)
+                               (not (.-requestFullscreen js/document.documentElement)))
+                      (set! (.. node -style -display) "none")))
+       :on-click (fn [_]
+                   (if (.-fullscreenElement js/document)
+                     (.exitFullscreen js/document)
+                     (.requestFullscreen js/document.documentElement))
+                   (.focus (js/document.querySelector ".board")))}
+      [:span.enter "fullscreen"] [:span.exit "exit"]]]))
 
 (def ui
   (buzz/handler {:index "public/index.html"
