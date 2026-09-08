@@ -22,10 +22,18 @@
 
 ;; Which player a connection is. One tab is one snake, so the key is the
 ;; connection id the request carries. A tab that is open but not in here is a
-;; spectator. Watched, so joining and leaving redraw.
+;; spectator.
 (defonce players (atom {}))
 
-(defn- my-pid [req] (get @players (buzz/connection req)))
+;; The board is one world, so every tab observes the whole of it. Who a tab is
+;; playing as concerns only that tab, so `players` is observed per connection
+;; and one person joining does not redraw anybody else's panel.
+(def game-source (buzz/atom-source game/state))
+(def players-source (buzz/atom-source players))
+
+;; Outside a `server` slot this reads through without subscribing, so the
+;; `server!` handlers below can call it too.
+(defn- my-pid [req] (buzz/observe players-source [(buzz/connection req)]))
 
 ;; Guarded on the player still being there rather than on the entry existing.
 ;; A player dropped for idling leaves the id behind, and refusing on that
@@ -46,9 +54,10 @@
    [:span.pts (:score p)]])
 
 (defui board []
-  (let [rows   (server (game/rows @game/state))
-        me     (server (game/me @game/state (my-pid (buzz/request))))
-        scores (server (game/scoreboard @game/state))]
+  (let [rows   (server (game/rows (buzz/observe game-source [])))
+        me     (server (game/me (buzz/observe game-source [])
+                                (my-pid (buzz/request))))
+        scores (server (game/scoreboard (buzz/observe game-source [])))]
     [:div.game
      ;; The board holds the focus, so the keys reach it rather than the page.
      ;; A div only takes focus with a tabindex, and only takes it by itself if
@@ -123,7 +132,6 @@
 
 (def ui
   (buzz/handler {:index "public/index.html"
-                 :watch [game/state players]
                  :mounts [{:el "app" :ui #'board}]
                  ;; A tab that goes away takes its snake with it, and the
                  ;; connection knows before the game does.
